@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">OwnDir</string>
+    <string name="button_text_start">Start</string>
+    <string name="button_text_stop">Stop</string>
+    <string name="node_process_name">owndir.nodejs</string>
+    <string name="menu_title_new_owndir">New OwnDir</string>
+    <string name="menu_title_help">Help</string>
+</resources>
