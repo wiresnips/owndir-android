@@ -12,79 +12,139 @@
 #include <node.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <fstream>
 #include <iostream>
 #include <streambuf>
 #include <string>
+#include <mutex>
 #include <jni.h>
 #include <android/log.h>
 
-static int pfd_stdout[2];
-static int pfd_stderr[2];
-static pthread_t thr_stdout;
-static pthread_t thr_stderr;
+
 static const char *tag = "nodejs";
+std::mutex logFileMutex;
+
+void logWithTimestamp(std::ofstream& logFile, char* message) {
+    auto now = std::chrono::system_clock::now();
+    std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
+    std::tm* localTime = std::localtime(&currentTime);
+
+    char timestamp[30];
+    strftime(timestamp, sizeof(timestamp), "[%Y-%m-%d %H:%M:%S]                               ", localTime);
+
+    std::unique_lock<std::mutex> lock(logFileMutex);
+    logFile << timestamp << message << std::endl;
+    lock.unlock();
+}
+
+
+// we're gonna just dupe this shit, because I do not care
+
+static int pfd_stdout[2];
+static pthread_t thr_stdout;
 
 static void *threadFuncStdout(void *arg) {
+    const char* logFilePath = (const char*) arg;
+    std::ofstream logFile(logFilePath, std::ios_base::app);
+
     ssize_t rdsz;
-    char buf[128];
-    while ((rdsz = read(pfd_stdout[0], buf, sizeof buf - 1)) > 0) {
+    char buf[2048];
+    FILE *fp;
+    fp = fdopen(pfd_stdout[0], "r");
+    if (fp == NULL) {
+        perror("fdopen");
+        return 0;
+    }
+    while (fgets(buf, sizeof buf, fp) != NULL) {
+        rdsz = strlen(buf);
         if (buf[rdsz - 1] == '\n') --rdsz;
         buf[rdsz] = 0;
+
         __android_log_write(ANDROID_LOG_INFO, tag, buf);
+
+        if (logFile.is_open()) {
+            logWithTimestamp(logFile, buf);
+        } else {
+            std::string errMsg = "Failed to open the file: " + std::string(logFilePath);
+            __android_log_write(ANDROID_LOG_ERROR, tag, errMsg.c_str());
+            std::cerr << "Failed to open the file: " << errMsg << std::endl;
+        }
     }
+    fclose(fp);
     return 0;
 }
 
-static void *threadFuncStderr(void *arg) {
-    ssize_t rdsz;
-    char buf[128];
-    while ((rdsz = read(pfd_stderr[0], buf, sizeof buf - 1)) > 0) {
-        if (buf[rdsz - 1] == '\n') --rdsz;
-        buf[rdsz] = 0;
-        __android_log_write(ANDROID_LOG_ERROR, tag, buf);
-    }
-    return 0;
-}
-
-int redirectStdoutToLogcat() {
+int redirectStdoutToLogcat(const char *logFilePath) {
     if (pipe(pfd_stdout) == -1) return -1;
     if (dup2(pfd_stdout[1], STDOUT_FILENO) == -1) return -1;
-    if (pthread_create(&thr_stdout, 0, threadFuncStdout, 0) == -1) return -1;
+    if (pthread_create(&thr_stdout, 0, threadFuncStdout, (void*) logFilePath) == -1) return -1;
     close(pfd_stdout[1]);
     return 0;
 }
 
-int redirectStderrToLogcat() {
+
+
+
+
+static int pfd_stderr[2];
+static pthread_t thr_stderr;
+
+static void *threadFuncStderr(void *arg) {
+    const char* logFilePath = (const char*) arg;
+    std::ofstream logFile(logFilePath, std::ios_base::app);
+
+    ssize_t rdsz;
+    char buf[2048];
+    FILE *fp;
+    fp = fdopen(pfd_stderr[0], "r");
+    if (fp == NULL) {
+        perror("fdopen");
+        return 0;
+    }
+    while (fgets(buf, sizeof buf, fp) != NULL) {
+        rdsz = strlen(buf);
+        if (buf[rdsz - 1] == '\n') --rdsz;
+        buf[rdsz] = 0;
+
+        __android_log_write(ANDROID_LOG_ERROR, tag, buf);
+
+        if (logFile.is_open()) {
+            logWithTimestamp(logFile, buf);
+        } else {
+            std::string errMsg = "Failed to open the file: " + std::string(logFilePath);
+            __android_log_write(ANDROID_LOG_ERROR, tag, errMsg.c_str());
+            std::cerr << "Failed to open the file: " << errMsg << std::endl;
+        }
+    }
+    fclose(fp);
+    return 0;
+}
+
+int redirectStderrToLogcat(const char *logFilePath) {
     if (pipe(pfd_stderr) == -1) return -1;
     if (dup2(pfd_stderr[1], STDERR_FILENO) == -1) return -1;
-    if (pthread_create(&thr_stderr, 0, threadFuncStderr, 0) == -1) return -1;
+    if (pthread_create(&thr_stderr, 0, threadFuncStderr, (void*) logFilePath) == -1) return -1;
     close(pfd_stderr[1]);
     return 0;
 }
 
 
 
-void Java_com_owndir_app_NodeService_startNode(JNIEnv *env, jobject instance, jobjectArray args)
+
+
+
+int Java_com_owndir_app_NodeService_startNode(JNIEnv *env, jobject instance, jstring jLogFile, jobjectArray args)
 {
-    redirectStdoutToLogcat();
-    redirectStderrToLogcat();
+    const char* logFilePath = env->GetStringUTFChars(jLogFile, 0);
+
+    redirectStdoutToLogcat(logFilePath);
+    redirectStderrToLogcat(logFilePath);
 
     // Prepare fake argv commandline arguments
     auto continuousArray = owndir::makeContinuousArray(env, args);
     auto argv = owndir::getArgv(continuousArray);
 
-    node::Start(argv.size() - 1, argv.data());
-
-    /*
-    std::string node_name = "node";
-    std::string version_flag = "--version";
-    char* new_argv[3];
-    new_argv[0] = const_cast<char*>(node_name.c_str());
-    new_argv[1] = const_cast<char*>(version_flag.c_str());
-    new_argv[2] = nullptr;
-    node::Start(2, new_argv);
-    //*/
-
+    return node::Start(argv.size() - 1, argv.data());
 }
 
 

@@ -1,6 +1,15 @@
 plugins {
     id 'com.android.application'
+    id "com.github.node-gradle.node" version "5.0.0"
 }
+
+
+node {
+    download = true
+    version = "16.14.0"
+    distBaseUrl = null
+}
+
 
 android {
     namespace 'com.owndir.app'
@@ -56,6 +65,7 @@ android {
     }
 }
 
+
 dependencies {
 
     implementation 'androidx.appcompat:appcompat:1.6.1'
@@ -73,3 +83,13 @@ dependencies {
 
 
 }
+
+// this only works because none of owndir-server's deps require native code (somehow)
+task installOwnDirServerDeps(type: NpmTask) {
+    args = [
+            '--prefix', "${rootProject.projectDir}/app/src/main/assets/owndir",
+            'install', "${rootProject.projectDir}/app/src/main/assets/owndir"
+    ]
+}
+
+preBuild.dependsOn installOwnDirServerDeps

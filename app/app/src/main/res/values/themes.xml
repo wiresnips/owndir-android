@@ -13,12 +13,17 @@
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
 
+        <!-- active thumb & track color (30% transparency) -->
+        <item name="colorControlActivated">#d602ee</item>
     </style>
 
 
     <style name="MyToolbarStyle" parent="ThemeOverlay.MaterialComponents.Light">
         <item name="android:textColorPrimary">@color/white</item>
         <item name="drawableTint">@color/white</item>
+
+        <!-- active thumb & track color (30% transparency) -->
+        <item name="colorControlActivated">#d602ee</item>
     </style>
 
 
@@ -32,7 +37,13 @@
         <item name="android:insetBottom">0dp</item>
     </style>
 
+    <style name="liveSwitch" parent="Widget.AppCompat.CompoundButton.Switch">
+        <item name="colorControlActivated">#43A047</item>
+    </style>
 
+    <style name="deadSwitch" parent="Widget.AppCompat.CompoundButton.Switch">
+        <item name="colorControlActivated">#2E2E2E</item>
+    </style>
 
 
 </resources>

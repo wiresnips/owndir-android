@@ -1,11 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:android="http://schemas.android.com/apk/res/android">
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    >
 
     <item
         android:id="@+id/action_help"
         android:icon="@drawable/baseline_help_outline_24"
         android:title="@string/menu_title_help"
         app:showAsAction="always" />
+
+    <item
+        android:id="@+id/node_service_toggle"
+        android:title="Switch"
+        app:actionLayout="@layout/switch_item"
+        app:showAsAction="always"
+        />
 
 </menu>

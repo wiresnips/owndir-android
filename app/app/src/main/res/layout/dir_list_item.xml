@@ -1,67 +1,133 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:orientation="vertical"
     android:padding="8dp">
 
     <LinearLayout
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
-        android:orientation="vertical"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/buttonContainer"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        android:gravity="center_vertical">
 
-        <TextView
-            android:id="@+id/dir_item_name"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            />
+            android:layout_weight="1"
+            android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/dir_item_filepath"
+            <TextView
+                android:id="@+id/dir_item_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Central"
+                android:textAppearance="@style/TextAppearance.AppCompat.Display1" />
+
+            <TextView
+                android:id="@+id/dir_item_filepath"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="/foo/bar/baz/quux/thud" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/serveButton"
+            style="?attr/materialButtonOutlinedStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            />
+            android:text="@string/serve"
+            app:icon="@drawable/baseline_play_arrow_24" />
 
-        <TextView
-            android:id="@+id/dir_item_url"
+        <!--
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/toggleEnabled"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            />
+            android:layout_height="match_parent"
+            android:paddingHorizontal="16dp"
+        />
+        -->
 
     </LinearLayout>
-
 
     <LinearLayout
-        android:id="@+id/buttonContainer"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        android:baselineAligned="true"
+        android:gravity="end"
+        android:orientation="horizontal">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/dir_item_run_button"
-            app:icon="@drawable/baseline_play_arrow_24"
-            app:iconTint="@color/button_color"
-            app:iconSize="24dp"
-            style="@style/MyButtonStyle"
-            />
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/dir_item_edit_button"
-            app:icon="@drawable/baseline_settings_24"
-            app:iconTint="@color/button_color"
-            app:iconSize="24dp"
-            style="@style/MyButtonStyle"
-            />
+            <ImageButton
+                android:id="@+id/deleteButton"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintDimensionRatio="1:1"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/baseline_delete_forever_24"
+                app:tint="@color/purple_500" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center_vertical|end"
+            android:orientation="horizontal">
+
+
+            <Button
+                android:id="@+id/logsButton"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:text="@string/logs"
+                app:icon="@drawable/twotone_history_edu_24" />
+
+            <Button
+                android:id="@+id/buildButton"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:text="@string/build"
+                app:icon="@drawable/baseline_plumbing_24" />
+
+
+            <ImageView
+                android:id="@+id/build_status_indicator_good"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                app:srcCompat="@drawable/baseline_check_circle_outline_24"
+                app:tint="#4CAF50" />
+
+            <ImageView
+                android:id="@+id/build_status_indicator_bad"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                app:srcCompat="@drawable/baseline_warning_amber_24"
+                app:tint="#F44336" />
+
+            <ProgressBar
+                android:id="@+id/build_status_indicator_waiting"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:indeterminate="true" />
+
+
+        </LinearLayout>
 
     </LinearLayout>
 
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+</LinearLayout>

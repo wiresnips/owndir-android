@@ -3,42 +3,51 @@ package com.owndir.app;
 import androidx.annotation.NonNull;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
-import android.net.Uri;
 
+import android.content.Context;
+import android.net.Uri;
+import android.os.Parcel;
+import android.os.Parcelable;
+
+import java.io.File;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.io.IOException;
 import java.net.ServerSocket;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
 @Entity(tableName = "owndir")
-public class OwnDir {
+public class OwnDir implements Parcelable {
     @PrimaryKey(autoGenerate = true)
     public int id = 0;
 
     @NonNull
     public String dir;
-    public String name;
+    public boolean enabled;
 
     public int port;
     public String token;
-    public String cookie; // we'll see if we get this far
 
+    public String appDir;
 
-    public OwnDir(@NonNull String dir, int port, String token, String cookie, String name) {
+    public OwnDir(@NonNull String dir, boolean enabled, int port, String token, String appDir) {
         this.dir = dir;
+        this.enabled = enabled;
         this.port = port;
         this.token = token;
-        this.cookie = cookie;
-        this.name = name;
+        this.appDir = appDir;
     }
 
-    public OwnDir(@NonNull Uri uri) {
-        this(
-            uri.toString(),
+    public OwnDir(Context context, String absPath) {
+        this(absPath,
+            false,
             generateOpenPort(),
             generateSecureToken(),
-            "",
-            uri.getLastPathSegment().replaceAll("^[^:]*:", "")
+            context.getFilesDir().getAbsolutePath()
         );
     }
 
@@ -49,8 +58,48 @@ public class OwnDir {
     public Uri getUrl () {
         Boolean useToken = token != null && !token.trim().isEmpty();
         return Uri.parse(
-                "http://localhost:" + port +
-                        (useToken ? ('/' + token) : "")
+    "http://localhost:" + port +
+            (useToken ? ('/' + token) : "")
+        );
+    }
+
+    public String getName () {
+        String[] splitPath = dir.split(File.separator);
+        return splitPath[splitPath.length - 1];
+    }
+
+
+    private String getHash () {
+        try {
+            MessageDigest messageDigest = MessageDigest.getInstance("SHA-1");
+            messageDigest.update(dir.getBytes(StandardCharsets.UTF_8));
+            byte[] digest = messageDigest.digest();
+            return Base64.getEncoder().encodeToString(digest);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Error generating hash", e);
+        }
+    }
+
+    public String getLogFilePath() {
+        return appDir + File.separator + getHash() + ".log";
+    }
+    public File getLogFile() { return new File(getLogFilePath()); }
+
+    public String getJsDir () {
+        return appDir + File.separator + "owndir";
+    }
+    public String getBuildDir () {
+        return getJsDir() + File.separator + "build" + File.separator + getHash();
+    }
+
+    public boolean isBuilt () {
+        File moduleFile = new File(getBuildDir() + File.separator + "module" + File.separator + "index.js");
+        File serverBundle = new File(getBuildDir() + File.separator + "server" + File.separator + "dist.js");
+        File clientBundle = new File(getBuildDir() + File.separator + "client" + File.separator + "dist.js");
+        return (
+            moduleFile.exists() && moduleFile.isFile() &&
+            serverBundle.exists() && serverBundle.isFile() &&
+            clientBundle.exists() && clientBundle.isFile()
         );
     }
 
@@ -71,6 +120,78 @@ public class OwnDir {
         }
     }
 
+
+    public String[] runCmd() {
+        String srcPath = getJsDir() + File.separator + "src" + File.separator + "index.js";
+
+        ArrayList<String> args = new ArrayList<>();
+        args.add("node");
+        args.add(srcPath);
+
+        args.add("-p");
+        args.add("" + port);
+
+
+        if (token != null && token.length() > 0) {
+            args.add("-t");
+            args.add(token);
+        }
+
+        args.add(dir);
+
+        return args.toArray(new String[args.size()]);
+    }
+
+    public String[] buildCmd() {
+        String srcPath = getJsDir() + File.separator + "src" + File.separator + "index.js";
+        return new String[] {"node", srcPath, "--build", "--run", "false", dir};
+    }
+
+
+    @NonNull
+    @Override
+    public String toString() {
+        return ("{" +
+                "id: " + id + " " +
+                "enabled: " + enabled + " " +
+                "dir: " + dir + " " +
+        "}");
+    }
+
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeInt(id);
+        dest.writeString(dir);
+        dest.writeByte((byte) (enabled ? 1 : 0));
+        dest.writeInt(port);
+        dest.writeString(token);
+        dest.writeString(appDir);
+    }
+
+    public static final Parcelable.Creator<OwnDir> CREATOR = new Parcelable.Creator<OwnDir>() {
+        public OwnDir createFromParcel(Parcel in) {
+            return new OwnDir(in);
+        }
+
+        public OwnDir[] newArray(int size) {
+            return new OwnDir[size];
+        }
+    };
+
+    private OwnDir(Parcel in) {
+        id = in.readInt();
+        dir = in.readString();
+        enabled = in.readByte() != 0;
+        port = in.readInt();
+        token = in.readString();
+        appDir = in.readString();
+    }
 
 
 

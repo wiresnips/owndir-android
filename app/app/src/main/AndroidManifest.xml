@@ -3,13 +3,13 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <!-- fs access -->
+    <!-- SAF permissions are insufficient for node's 'fs' library (ie, fs.readdirSync sees folders but not files) -->
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <!-- run node without (?) letting it die -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
-    <!-- put up a webserver -->
+    <!-- launch a webserver, install npm packages -->
     <uses-permission android:name="android.permission.INTERNET" />
 
 
@@ -30,6 +30,16 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_provider_paths" />
+        </provider>
 
         <service
             android:name=".NodeService"

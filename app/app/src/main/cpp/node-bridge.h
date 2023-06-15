@@ -12,7 +12,7 @@
 #include <vector>
 
 extern "C" {
-JNIEXPORT void JNICALL Java_com_owndir_app_NodeService_startNode(JNIEnv *env, jobject instance, jobjectArray args);
+JNIEXPORT int JNICALL Java_com_owndir_app_NodeService_startNode(JNIEnv *env, jobject instance, jstring logFile, jobjectArray args);
 // JNIEXPORT void JNICALL Java_com_owndir_app_NodeService_stopNode(JNIEnv *env, jobject instance);
 }
 
