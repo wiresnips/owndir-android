@@ -18,6 +18,7 @@ import android.os.IBinder;
 import android.os.Process;
 
 import androidx.annotation.Nullable;
+import androidx.core.app.NotificationCompat;
 
 import android.system.ErrnoException;
 import android.system.Os;
@@ -125,7 +126,7 @@ public class NodeService extends Service {
         Intent notificationIntent = new Intent(this, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
 
-        Notification notification = new Notification.Builder(this, notification_channel_id)
+        Notification notification = new NotificationCompat.Builder(this, notification_channel_id)
             .setContentTitle(title)
             .setContentText(text)
             .setSmallIcon(R.drawable.ic_node_service_icon)

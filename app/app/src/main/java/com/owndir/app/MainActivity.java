@@ -64,9 +64,11 @@ public class MainActivity extends AppCompatActivity {
 
             if (action == NodeService.STATUS) {
                 OwnDir ownDir = intent.getParcelableExtra("ownDir");
-                for (int i = ownDirList.size() - 1; i >= 0; i--) {
-                    if (ownDirList.get(i).id == ownDir.id) {
-                        ownDirList.set(i, ownDir);
+                if (ownDir != null) {
+                    for (int i = ownDirList.size() - 1; i >= 0; i--) {
+                        if (ownDirList.get(i).id == ownDir.id) {
+                            ownDirList.set(i, ownDir);
+                        }
                     }
                 }
             }
@@ -173,6 +175,8 @@ public class MainActivity extends AppCompatActivity {
         filter.addAction(NodeService.BUSY);
         filter.addAction(NodeService.DESTROYED);
         registerReceiver(receiver, filter);
+
+        OwnDirService.status(this);
     }
 
     @Override

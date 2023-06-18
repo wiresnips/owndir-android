@@ -8,6 +8,7 @@ import androidx.room.PrimaryKey;
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
 
 import java.io.File;
 import java.net.HttpURLConnection;
@@ -64,7 +65,7 @@ public class OwnDir implements Parcelable {
         useToken = false; // for now, tokens are just broken
 
         return Uri.parse(
-    "http://localhost:" + port +
+    "http://127.0.0.1:" + port +
             (useToken ? ('/' + token) : "")
         );
     }
@@ -109,14 +110,14 @@ public class OwnDir implements Parcelable {
         );
     }
 
-    public boolean pingServer() {
+    public boolean pingServer(int timeoutMs) {
         HttpURLConnection connection = null;
         try {
             URL url = new URL(getUrl().toString());
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
-            connection.setConnectTimeout(250);
-            connection.setReadTimeout(250);
+            connection.setConnectTimeout(timeoutMs);
+            connection.setReadTimeout(timeoutMs);
             connection.connect();
             int responseCode = connection.getResponseCode();
             return responseCode == HttpURLConnection.HTTP_OK;

@@ -18,6 +18,7 @@ import android.os.Build;
 import android.os.IBinder;
 
 import androidx.annotation.Nullable;
+import androidx.core.app.NotificationCompat;
 
 import android.util.Log;
 
@@ -79,7 +80,11 @@ public class OwnDirService extends NodeService {
     }
 
 
-
+    public static void status (Context context) {
+        Intent intent = new Intent(context, OwnDirService.class);
+        intent.setAction(STATUS);
+        context.startForegroundService(intent);
+    }
 
 
 
@@ -93,7 +98,7 @@ public class OwnDirService extends NodeService {
 
 
     public OwnDir ownDir;
-    
+
 
 
     @Override
@@ -123,6 +128,11 @@ public class OwnDirService extends NodeService {
                         "\n\t\t" + "owndir: " + (newOwndir != null ? newOwndir.toString() : "none")
         );
 
+        if (STATUS.equals(action)) {
+            broadcastStatus();
+            return START_NOT_STICKY;
+        }
+
         if (KILL.equals(action)) {
             if (newOwndir == null || ownDir == null || newOwndir.id == ownDir.id) {
                 kill();
@@ -145,11 +155,13 @@ public class OwnDirService extends NodeService {
 
             run(ownDir.getLogFilePath(), newCommand);
 
-
-            String[] commandWithoutPaths = Arrays.copyOfRange(command, 0, command.length -2);
-            commandWithoutPaths[1] = "$(owndir.js)";
+            if (ownDir.isRunningServer) {
+                pollServer();
+            }
 
             // what a pain in the ass
+            String[] commandWithoutPaths = Arrays.copyOfRange(command, 0, command.length -2);
+            commandWithoutPaths[1] = "$(owndir.js)";
             createNotification(
                 String.join(" ", commandWithoutPaths),
                 "    " + command[command.length-1]
@@ -181,7 +193,61 @@ public class OwnDirService extends NodeService {
 
 
 
+    private volatile boolean polling = false;
 
+    private void pollServer () {
+        polling = true;
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    int timeout = 250;
+                    int minutesToWait = 5;
+                    int retries = (minutesToWait * 60 * 1000) / timeout;
+
+                    for (int i = 0; polling && (i < retries); i++) {
+                        if (ownDir.pingServer(timeout)) {
+                            ownDir.isServerUp = true;
+                            broadcastStatus();
+                            break;
+                        }
+                        Thread.sleep(timeout);
+                    }
+                }
+                catch (InterruptedException e) {}
+                polling = false;
+            }
+        }).start();
+    }
+
+
+
+
+    @Override
+    public void createNotification(String title, String text) {
+        Log.d("OwnDir", "NodeService createNotification");
+
+        Intent notificationIntent = new Intent(this, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+
+        Intent killIntent = new Intent(this, OwnDirService.class);
+        killIntent.setAction(KILL);
+        PendingIntent killPendingIntent = PendingIntent.getService(this, 0, killIntent, 0);
+        NotificationCompat.Action killAction = new NotificationCompat.Action.Builder(
+                R.drawable.baseline_cancel_24, "Stop", killPendingIntent).build();
+
+        Notification notification = new NotificationCompat.Builder(this, notification_channel_id)
+                .setContentTitle(title)
+                .setContentText(text)
+                .setSmallIcon(R.drawable.ic_node_service_icon)
+                .setContentIntent(pendingIntent)
+                .setTicker(this.getText(R.string.app_name))
+                .setPriority(Notification.PRIORITY_MIN)
+                .addAction(killAction)
+                .build();
+
+        startForeground(NOTIFICATION_ID, notification);
+    }
 
 
 }
