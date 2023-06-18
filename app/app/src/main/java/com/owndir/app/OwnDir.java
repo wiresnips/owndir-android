@@ -2,14 +2,16 @@ package com.owndir.app;
 
 import androidx.annotation.NonNull;
 import androidx.room.Entity;
+import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
-import android.content.Context;
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
 
 import java.io.File;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -27,27 +29,29 @@ public class OwnDir implements Parcelable {
 
     @NonNull
     public String dir;
-    public boolean enabled;
-
     public int port;
     public String token;
 
-    public String appDir;
+    @Ignore
+    public boolean isRunningBuild = false;
+    @Ignore
+    public boolean isRunningServer = false;
+    @Ignore
+    public boolean isServerUp = false;
 
-    public OwnDir(@NonNull String dir, boolean enabled, int port, String token, String appDir) {
+
+    public static String appDir;
+
+    public OwnDir(@NonNull String dir, int port, String token) {
         this.dir = dir;
-        this.enabled = enabled;
         this.port = port;
         this.token = token;
-        this.appDir = appDir;
     }
 
-    public OwnDir(Context context, String absPath) {
+    public OwnDir(String absPath) {
         this(absPath,
-            false,
             generateOpenPort(),
-            generateSecureToken(),
-            context.getFilesDir().getAbsolutePath()
+            generateSecureToken()
         );
     }
 
@@ -56,7 +60,9 @@ public class OwnDir implements Parcelable {
     }
 
     public Uri getUrl () {
-        Boolean useToken = token != null && !token.trim().isEmpty();
+        boolean useToken = token != null && !token.trim().isEmpty();
+        useToken = false; // for now, tokens are just broken
+
         return Uri.parse(
     "http://localhost:" + port +
             (useToken ? ('/' + token) : "")
@@ -103,6 +109,32 @@ public class OwnDir implements Parcelable {
         );
     }
 
+    public boolean pingServer() {
+        HttpURLConnection connection = null;
+        try {
+            URL url = new URL(getUrl().toString());
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+            connection.setConnectTimeout(250);
+            connection.setReadTimeout(250);
+            connection.connect();
+            int responseCode = connection.getResponseCode();
+            return responseCode == HttpURLConnection.HTTP_OK;
+        } catch (IOException e) {
+            return false;
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+    }
+
+
+
+
+
+
+
     public static String generateSecureToken() {
         SecureRandom secureRandom = new SecureRandom();
         Base64.Encoder base64Encoder = Base64.getUrlEncoder();
@@ -132,10 +164,13 @@ public class OwnDir implements Parcelable {
         args.add("" + port);
 
 
+        /*
+        // this doesn't work conceptually as well as I'd thought
         if (token != null && token.length() > 0) {
             args.add("-t");
             args.add(token);
         }
+        //*/
 
         args.add(dir);
 
@@ -152,9 +187,11 @@ public class OwnDir implements Parcelable {
     @Override
     public String toString() {
         return ("{" +
-                "id: " + id + " " +
-                "enabled: " + enabled + " " +
-                "dir: " + dir + " " +
+                "id: " + id + ", " +
+                "dir: " + dir + ", " +
+                "build?: " + (isRunningBuild ? "true" : "false") + ", " +
+                "serve?: " + (isRunningServer ? "true" : "false") + ", " +
+                "visible?: " + (isServerUp ? "true" : "false") + ", " +
         "}");
     }
 
@@ -168,10 +205,12 @@ public class OwnDir implements Parcelable {
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeInt(id);
         dest.writeString(dir);
-        dest.writeByte((byte) (enabled ? 1 : 0));
         dest.writeInt(port);
         dest.writeString(token);
         dest.writeString(appDir);
+        dest.writeBoolean(isRunningBuild);
+        dest.writeBoolean(isRunningServer);
+        dest.writeBoolean(isServerUp);
     }
 
     public static final Parcelable.Creator<OwnDir> CREATOR = new Parcelable.Creator<OwnDir>() {
@@ -187,10 +226,12 @@ public class OwnDir implements Parcelable {
     private OwnDir(Parcel in) {
         id = in.readInt();
         dir = in.readString();
-        enabled = in.readByte() != 0;
         port = in.readInt();
         token = in.readString();
         appDir = in.readString();
+        isRunningBuild = in.readBoolean();
+        isRunningServer = in.readBoolean();
+        isServerUp = in.readBoolean();
     }
 
 

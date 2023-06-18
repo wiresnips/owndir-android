@@ -10,10 +10,8 @@
         app:showAsAction="always" />
 
     <item
-        android:id="@+id/node_service_toggle"
-        android:title="Switch"
-        app:actionLayout="@layout/switch_item"
-        app:showAsAction="always"
-        />
-
+        android:id="@+id/action_add_owndir"
+        android:icon="@drawable/baseline_create_new_folder_24"
+        android:title="@string/menu_title_help"
+        app:showAsAction="always" />
 </menu>

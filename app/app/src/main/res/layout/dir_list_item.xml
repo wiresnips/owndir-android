@@ -35,21 +35,23 @@
         </LinearLayout>
 
         <Button
-            android:id="@+id/serveButton"
+            android:id="@+id/serveButton_start"
             style="?attr/materialButtonOutlinedStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/serve"
             app:icon="@drawable/baseline_play_arrow_24" />
 
-        <!--
-        <androidx.appcompat.widget.SwitchCompat
-            android:id="@+id/toggleEnabled"
+
+        <Button
+            android:id="@+id/serveButton_stop"
+            style="?attr/materialIconButtonFilledStyle"
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:paddingHorizontal="16dp"
-        />
-        -->
+            android:layout_height="wrap_content"
+            android:text="@string/serve"
+            app:icon="@drawable/baseline_stop_24" />
+
+
 
     </LinearLayout>
 
@@ -96,34 +98,20 @@
                 app:icon="@drawable/twotone_history_edu_24" />
 
             <Button
-                android:id="@+id/buildButton"
+                android:id="@+id/buildButton_start"
                 style="?attr/materialButtonOutlinedStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
                 android:text="@string/build"
                 app:icon="@drawable/baseline_plumbing_24" />
 
-
-            <ImageView
-                android:id="@+id/build_status_indicator_good"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                app:srcCompat="@drawable/baseline_check_circle_outline_24"
-                app:tint="#4CAF50" />
-
-            <ImageView
-                android:id="@+id/build_status_indicator_bad"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                app:srcCompat="@drawable/baseline_warning_amber_24"
-                app:tint="#F44336" />
-
-            <ProgressBar
-                android:id="@+id/build_status_indicator_waiting"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:indeterminate="true" />
+            <Button
+                android:id="@+id/buildButton_stop"
+                style="?attr/materialIconButtonFilledStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/build"
+                app:icon="@drawable/baseline_stop_24" />
 
 
         </LinearLayout>

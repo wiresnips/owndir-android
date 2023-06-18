@@ -19,12 +19,14 @@
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:process=":owndir"
         android:supportsRtl="true"
         android:theme="@style/Theme.App"
         tools:targetApi="31">
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -42,9 +44,10 @@
         </provider>
 
         <service
-            android:name=".NodeService"
-            android:process="@string/node_process_name"
-            android:exported="false"/>
+            android:name=".OwnDirService"
+            android:process=":node_js"
+            android:exported="false"
+            />
 
     </application>
 
