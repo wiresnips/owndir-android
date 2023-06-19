@@ -223,31 +223,6 @@ public class OwnDirService extends NodeService {
 
 
 
-    @Override
-    public void createNotification(String title, String text) {
-        Log.d("OwnDir", "NodeService createNotification");
-
-        Intent notificationIntent = new Intent(this, MainActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
-
-        Intent killIntent = new Intent(this, OwnDirService.class);
-        killIntent.setAction(KILL);
-        PendingIntent killPendingIntent = PendingIntent.getService(this, 0, killIntent, 0);
-        NotificationCompat.Action killAction = new NotificationCompat.Action.Builder(
-                R.drawable.baseline_cancel_24, "Stop", killPendingIntent).build();
-
-        Notification notification = new NotificationCompat.Builder(this, notification_channel_id)
-                .setContentTitle(title)
-                .setContentText(text)
-                .setSmallIcon(R.drawable.ic_node_service_icon)
-                .setContentIntent(pendingIntent)
-                .setTicker(this.getText(R.string.app_name))
-                .setPriority(Notification.PRIORITY_MIN)
-                .addAction(killAction)
-                .build();
-
-        startForeground(NOTIFICATION_ID, notification);
-    }
 
 
 }
